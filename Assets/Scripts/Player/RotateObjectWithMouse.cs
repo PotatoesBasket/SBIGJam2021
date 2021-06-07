@@ -15,13 +15,13 @@ public class RotateObjectWithMouse : MonoBehaviour
 
     private void Update()
     {
-        if (!GameManager.current.GamePaused && !IsPaused)
+        if (IsPaused == false)
             UpdateInput();
     }
 
     private void FixedUpdate()
     {
-        if (!GameManager.current.GamePaused && !IsPaused)
+        if (IsPaused == false)
         {
             float mouseSensitivityFactor = mouseSensitivityCurve.Evaluate(mouse.magnitude);
             transform.rotation *= Quaternion.AngleAxis(-mouse.y * mouseSensitivityFactor * speed, Vector3.right);

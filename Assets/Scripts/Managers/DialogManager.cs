@@ -15,10 +15,12 @@ public class DialogManager : MonoBehaviour
 
     Dictionary<uint, List<string>> dialogDictionary = new Dictionary<uint, List<string>>();
 
-    string dialogFilePath = "Dialog.txt";
+    string dialogFilePath = Application.streamingAssetsPath + "/Dialog.txt";
     List<string> currentPendingDialog = new List<string>();
     public Animator currentAnimator = null;
     public CinemachineVirtualCamera currentCam = null;
+
+    public bool allowProgression = true;
 
     enum DialogState
     {
@@ -73,17 +75,20 @@ public class DialogManager : MonoBehaviour
                 break;
 
             case DialogState.WaitForNext:
-                if (Input.GetButtonDown("Button"))
+                if (Input.GetButtonDown("Button") && !CameraManager.current.CamIsBlending() && allowProgression)
                 {
                     currentDialogState = DialogState.Continuing;
+                    AudioManager.current.SFXDefaultSource.PlayOneShot(AudioManager.current.dialogContinueBoop);
                 }
                 break;
 
             case DialogState.WaitForClose:
-                if (Input.GetButtonDown("Button"))
+                if (Input.GetButtonDown("Button") && !CameraManager.current.CamIsBlending() && allowProgression)
                 {
                     EndDialogBlock();
                     currentDialogState = DialogState.Closed;
+                    AudioManager.current.SFXDefaultSource.PlayOneShot(AudioManager.current.dialogContinueBoop);
+                    AudioManager.current.SFXDefaultSource.Stop();
                 }
                 break;
 
@@ -94,13 +99,23 @@ public class DialogManager : MonoBehaviour
 
     public void LoadNextDialogBlock(uint dialogID = 0)
     {
-        GameManager.current.PlayerController.SetAllPauseState(true);
+        GameManager.current.playerController.SetAllPauseState(true);
 
         // find dialog block in dictionary by ID
         if (dialogDictionary.TryGetValue(dialogID, out List<string> lines))
             currentPendingDialog = lines;
 
         currentDialogState = DialogState.Starting;
+    }
+
+    public bool IsLastBox()
+    {
+        return currentDialogState == DialogState.WaitForClose;
+    }
+
+    public bool IsClosed()
+    {
+        return currentDialogState == DialogState.Closed;
     }
 
     void LoadNextDialogLine(bool firstLine = false)
@@ -112,24 +127,37 @@ public class DialogManager : MonoBehaviour
         {
             char attributeCode = line[trimNo + 1];
 
+            Debug.Log("Processing line: " + line);
+            Debug.Log("Current trimNo: " + trimNo);
+            Debug.Log("Attr code: " + attributeCode);
+
             switch (attributeCode)
             {
                 case 'N': // get current speaker name
                     {
-                        //nameTag.text = attributeName
+                        Debug.Log("Processing nametag");
 
-                        trimNo += 12;
+                        int startIdx = trimNo + 2;
+                        int endIdx = line.IndexOf('}');
+
+                        char[] name = line.ToCharArray(startIdx, endIdx - startIdx);
+
+                        nameTag.text = new string(name);
+
+                        trimNo += name.Length + 4;
                     }
                     break;
 
                 case 'A': // get next animation property
                     {
-                        int.TryParse(line[2].ToString(), out int idx);
+                        Debug.Log("Processing animation");
+
+                        int.TryParse(line[trimNo + 2].ToString(), out int idx);
 
                         currentAnimator = GameManager.current.animatorControllerList[idx];
 
-                        int.TryParse(line[3].ToString(), out idx);
-                        int.TryParse(line[4].ToString(), out int idx2);
+                        int.TryParse(line[trimNo + 3].ToString(), out idx);
+                        int.TryParse(line[trimNo + 4].ToString(), out int idx2);
 
                         if (currentAnimator != null)
                             currentAnimator.SetBool(GameManager.current.animatorPropertyList[idx], idx2 == 1);
@@ -140,14 +168,18 @@ public class DialogManager : MonoBehaviour
 
                 case 'C': // get next camera
                     {
-                        int.TryParse(line[2].ToString(), out int idx);
+                        Debug.Log("Processing camera");
+
+                        int.TryParse(line[trimNo + 2].ToString(), out int idx);
 
                         currentCam = CameraManager.current.cameraList[idx];
 
-                        int.TryParse(line[3].ToString(), out idx);
+                        int.TryParse(line[trimNo + 3].ToString(), out idx);
 
                         if (currentCam != null)
                             currentCam.enabled = idx == 1;
+
+                        Debug.Log(currentCam.name + " set to " + (idx == 1));
 
                         trimNo += 5;
                     }
@@ -155,7 +187,9 @@ public class DialogManager : MonoBehaviour
 
                 case 'E': // extra
                     {
-                        //do HUD slide in thing
+                        Debug.Log("Processing eeeeee");
+
+                        GameManager.current.SlideInHUD();
 
                         trimNo += 3;
                     }
@@ -168,15 +202,26 @@ public class DialogManager : MonoBehaviour
         dialogText.text = line.Remove(0, trimNo); // write dialog line into UI text
         currentPendingDialog.RemoveAt(0); // remove used dialog from list
 
+        Debug.Log("Pushed processed line into dialog display: " + line.Remove(0, trimNo));
+
         if (firstLine)
-            BeginDialogBlock(); //StartCoroutine(WaitForCamThenOpenDialog());
+        {
+            if (currentCam == null)
+                BeginDialogBlock();
+            else
+                StartCoroutine(WaitForCamThenOpenDialog());
+        }
+        else
+        {
+            StartTalkingSFX();
+        }
     }
 
     IEnumerator WaitForCamThenOpenDialog()
     {
-        yield return new WaitUntil(CameraManager.current.CheckCamBlendState); // need to wait like a frame or something for blend to actually start
+        yield return new WaitUntil(CameraManager.current.CamIsBlending); // need to wait like a frame or something for blend to actually start
 
-        while (CameraManager.current.CheckCamBlendState()) // run until cam is finished blending
+        while (CameraManager.current.CamIsBlending()) // run until cam is finished blending
         {
             yield return null;
         }
@@ -190,9 +235,11 @@ public class DialogManager : MonoBehaviour
             currentAnimator.SetBool("isTalking", true);
 
         dialogBox.SetActive(true);
+
+        StartTalkingSFX();
     }
 
-    void EndDialogBlock()
+    public void EndDialogBlock()
     {
         if (currentCam != null)
             currentCam.enabled = false;
@@ -204,7 +251,7 @@ public class DialogManager : MonoBehaviour
         currentAnimator = null;
 
         dialogBox.SetActive(false);
-        GameManager.current.PlayerController.SetAllPauseState(false);
+        GameManager.current.playerController.SetAllPauseState(false);
     }
 
     void LoadDialogFromFile()
@@ -216,27 +263,57 @@ public class DialogManager : MonoBehaviour
 
         file.ReadLine(); // skip note line
 
+        Debug.Log("begin dialog file read");
+
         while (!file.EndOfStream)
         {
-            string line = file.ReadLine();
+            string line = file.ReadLine(); // read in next line
 
-            if (line[0] != '=') // not new block, add to current block list
+            // check if line is start of new block
+            if (line[0] == '=') // yes
             {
-                block.Add(line);
-            }
-            else // new block, copy current block list to dictionary and clear
-            {
+                // process completed block
                 List<string> blockCopy = new List<string>();
 
                 foreach (string l in block)
                     blockCopy.Add((string)l.Clone());
 
                 dialogDictionary.Add(blockID, blockCopy);
-                ++blockID;
                 block.Clear();
+
+                Debug.Log("Block " + blockID + " added to block dictionary");
+
+                // get new block ID
+                string ID = new string(line.ToCharArray(), 3, 2);
+                uint.TryParse(ID, out blockID);
+            }
+            else // no
+            {
+                // add line to current block
+                block.Add(line);
+
+                Debug.Log("Line (" + line + ") added to block " + blockID);
             }
         }
 
+        // process final block
+        List<string> finalBlockCopy = new List<string>();
+
+        foreach (string l in block)
+            finalBlockCopy.Add((string)l.Clone());
+
+        dialogDictionary.Add(blockID, finalBlockCopy);
+        Debug.Log("Block " + blockID + " added to block dictionary");
+
+        Debug.Log("end dialog file read");
+
         file.Close();
+    }
+
+    void StartTalkingSFX()
+    {
+        AudioManager.current.SFXDefaultSource.clip = AudioManager.current.gibberish.GetRandomizedClip();
+        AudioManager.current.SFXDefaultSource.loop = false;
+        AudioManager.current.SFXDefaultSource.Play();
     }
 }

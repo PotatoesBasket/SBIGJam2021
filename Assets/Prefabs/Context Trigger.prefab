@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7879565404904805981}
   - component: {fileID: 7879565404904805980}
   - component: {fileID: 7879565404904805955}
+  - component: {fileID: 7912504748176860250}
   m_Layer: 9
   m_Name: Context Trigger
   m_TagString: Trigger
@@ -93,3 +94,15 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7912504748176860250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7879565404904805953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdd2662b235b3cc47a1f6922e9e65e54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

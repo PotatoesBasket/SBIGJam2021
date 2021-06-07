@@ -4,21 +4,23 @@ using UnityEngine;
 
 public class DebugManager : MonoBehaviour
 {
-    [SerializeField] bool hideDebugRenderers = false;
-
-    List<MeshRenderer> debugRenderers = new List<MeshRenderer>();
+    [SerializeField] bool hideDebugStuff = false;
 
     private void Start()
     {
-        if (hideDebugRenderers)
+        if (hideDebugStuff)
         {
-            GameObject[] objs = GameObject.FindGameObjectsWithTag("Trigger");
+            // disable objects tagged "Debug"
+            GameObject[] debugObjects = GameObject.FindGameObjectsWithTag("Debug");
 
-            foreach (GameObject o in objs)
-                debugRenderers.Add(o.GetComponent<MeshRenderer>());
+            foreach (GameObject o in debugObjects)
+                o.SetActive(false);
 
-            foreach (MeshRenderer r in debugRenderers)
-                r.enabled = false;
+            // disable mesh renderers on objects tagged "Trigger"
+            GameObject[] triggers = GameObject.FindGameObjectsWithTag("Trigger");
+
+            foreach (GameObject t in triggers)
+                t.GetComponent<MeshRenderer>().enabled = false;
         }
     }
 }

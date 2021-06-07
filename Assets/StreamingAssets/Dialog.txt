@@ -1,0 +1,66 @@
+N = nametag, A = animator bool, C = camera, E = extra
+===01===
+[C11][A100][Nrobo-dude}]...Oh?
+[A111]Ooohh!!
+You’re here!
+You’re actually here!
+[A110]…*ahem*
+Thank you for responding to our call for help.
+[A111]We knew you were a bad enough dude for the job!
+[A110]What’s the job, exactly…?
+Well, you see…
+[A111]It’s all of them!
+Everything!
+The whole land is rife all sorts of problems!
+[A110]Sounds like a lot, huh?
+Like a huge responsibility that you couldn’t even possibly begin to handle, right?
+[A111]Don’t worry! That’s why all the land’s top scientists and engineers have graciously and voluntarily* worked many long hours to give you this...
+[C21][C10][E]The Ultra A.I.™!
+Check out that slick controller design!
+Now all the confusion and uncertainty that comes with delicately navigating any given problematic situation--
+--from jumping from one platform to the next, to knowing just the right words to say to ease the shattered heart of a young child grieving their murdered parents--
+--is gone!
+[C20][C11][A110]All you have to do is move the Ultra A.I.™ to the problem you want to solve, and press this obnoxiously big and unmissable button!
+Our A.I. friend here will then determine just the right action for the situation, and perform it! It’s that simple!
+[A111]No more guesswork! The Ultra A.I.™ hasn’t failed us once!
+Even the most questionable of its actions eventually turned out to have had purpose!
+[C10][A110]How about you give it a try? Go over to that ledge there and see what our A.I. buddy can do!
+===02===
+[C11][A111][Nrobo-dude}]Wow! What a jump!
+So effortless! So cool!
+The problem of the ledge being in the way was no problem at all for the Ultra A.I.™!
+[C10][C31]Now see what it does when you try it out on that nice boy over there!
+===03===
+[C11][A111][Nrobo-dude}]How sweet!
+[A110]The Ultra A.I.™ is a friend to all.
+[A111]Anyone would be thrilled to have their problems solved by the Ultra A.I.™!
+[A110]Even the problem of having the hankering for a good ol' butt-scratch.
+[C10][C41]How about you get the hang of things by navigating the Ultra A.I.™ over to me at the other side of this strange and seemingly purposeless structure.
+===04===
+[C11][A111][Nrobo-dude}]Lookin' good!
+[A110]Now you're ready to go out into the world and start solving problems!
+I'll take you to your first assignment!
+[A111]Let's gooooooooo!
+===05===
+[C11][A111][Nrobo-dude}]Wow! So diligent!
+[A110]You helped every one of my stinky babies...
+[A111]You truly are the hero we so desperately need!
+[A110]Anyway, now you're ready to go out into the world and start solving problems!
+[A111]I'll take you to your first assignment!
+Let's gooooooooo!
+===20===
+[C11][A110]...
+No...
+We were too late...
+It's all gone.
+There's nothing left...
+Not a single soul...
+...
+===99===
+Was there a method to its madness?
+Maybe it was a desperate ritual, necessary for staving off some kind of unknown horror.
+Maybe the AI had found its true calling.
+Maybe it was just a glitch in the algorithm.
+We’ll never know.
+It continued dancing for the rest of eternity, even as the village burned around it.
+*slow zoom out on shot of stupid dance, fade to black*

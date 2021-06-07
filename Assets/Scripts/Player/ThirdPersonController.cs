@@ -9,7 +9,6 @@ public class ThirdPersonController : MonoBehaviour
     // components
     CharacterController charController;
     Animator animController;
-    RotateObjectWithMouse camController;
 
     [SerializeField] SphereCollider groundCheck = null;
     [SerializeField] LayerMask groundLayerMask = 0;
@@ -21,57 +20,44 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] float maxSpeed = 0;
     [SerializeField] float maxVerticalSpeed = 0;
     [SerializeField] float drag = 0;
+    [SerializeField] float gravity = 0;
 
-    // camera movement
-    [SerializeField] float turnSpeed = 3;
-    [SerializeField] AnimationCurve mouseSensitivityCurve = new AnimationCurve(new Keyframe(0f, 0.5f, 0f, 5f), new Keyframe(1f, 2.5f, 0f, 0f));
+    //// camera movement
+    //[SerializeField] float turnSpeed = 3;
+    //[SerializeField] AnimationCurve mouseSensitivityCurve = new AnimationCurve(new Keyframe(0f, 0.5f, 0f, 5f), new Keyframe(1f, 2.5f, 0f, 0f));
 
     // pausing
     public bool physicsPaused = false;
     public bool playerInputPaused = false;
-    public bool cameraInputPaused = false;
     public bool isAirborne = false;
 
-    private void Start()
+    private void Awake()
     {
         charController = GetComponent<CharacterController>();
         animController = GetComponent<Animator>();
-        camController = GetComponentInChildren<RotateObjectWithMouse>();
     }
 
     private void Update()
     {
-        UpdateDebugControls();
+        if (playerInputPaused == false)
+            UpdatePlayerInput();
 
-        if (!GameManager.current.GamePaused)
-        {
-            //Cursor.lockState = CursorLockMode.Locked;
-            //Cursor.visible = false;
+        if (contextInput)
+            DoThing();
 
-            if (!playerInputPaused)
-                UpdatePlayerInput();
-
-            if (!cameraInputPaused)
-                UpdateCameraInput();
-
-            if (contextInput)
-                DoThing();
-        }
+        if (longContextInput)
+            DoThingLonger();
     }
 
     private void FixedUpdate()
     {
-        if (!GameManager.current.GamePaused)
+        if (physicsPaused == false)
         {
-            if (!physicsPaused)
-            {
-                Gravity();
-                Drag();
-                //Looking();
-                Moving();
+            Gravity();
+            Drag();
+            Moving();
 
-                charController.Move(transform.TransformVector(velocity) * Time.fixedDeltaTime);
-            }
+            charController.Move(transform.TransformVector(velocity) * Time.fixedDeltaTime);
         }
     }
 
@@ -84,31 +70,9 @@ public class ThirdPersonController : MonoBehaviour
     //--------------------------------------------------------------
 
     Vector2 joystick;
-    Vector2 mouse;
     bool contextInput;
     bool longContextInput;
-
-    void UpdateDebugControls()
-    {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            playerInputPaused = !playerInputPaused;
-            Debug.Log("Player input " + (playerInputPaused ? "paused" : "unpaused"));
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            cameraInputPaused = !cameraInputPaused;
-            camController.IsPaused = !camController.IsPaused;
-            Debug.Log("Player-rotated camera input " + (cameraInputPaused ? "paused" : "unpaused"));
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            physicsPaused = !physicsPaused;
-            Debug.Log("Physics " + (physicsPaused ? "paused" : "unpaused"));
-        }
-    }
+    bool contextInputEnded;
 
     void UpdatePlayerInput()
     {
@@ -117,15 +81,10 @@ public class ThirdPersonController : MonoBehaviour
 
         contextInput = Input.GetButtonDown("Button");
         longContextInput = Input.GetButton("Button");
+        contextInputEnded = Input.GetButtonUp("Button");
 
         animController.SetFloat("Move X", joystick.x);
         animController.SetFloat("Move Y", joystick.y);
-    }
-
-    void UpdateCameraInput()
-    {
-        mouse.x = Input.GetAxis("Mouse X");
-        mouse.y = Input.GetAxis("Mouse Y");
     }
 
     #endregion
@@ -137,13 +96,11 @@ public class ThirdPersonController : MonoBehaviour
 
     void Gravity()
     {
-        if (!IsGrounded()) // apply gravity
+        if (IsGrounded() == false) // apply gravity
         {
-            Vector3 gravity = Vector3.up * Physics.gravity.y;
+            velocity.y -= gravity * Time.fixedDeltaTime;
 
-            velocity += gravity * Time.fixedDeltaTime;
-
-            if (!isAirborne)
+            if (isAirborne == false)
                 isAirborne = true;
         }
         else // reset y velocity on landing (prevents gravity accumulating)
@@ -152,26 +109,29 @@ public class ThirdPersonController : MonoBehaviour
             {
                 isAirborne = false;
 
-                if (velocity.y < -3.0f) // arbitrary number to help with slopes
+                if (velocity.y < 3.0f) // arbitrary number to help with slopes
                 {
                     velocity.y = 0;
                 }
             }
         }
-
-        animController.SetBool("isAirborne", isAirborne);
-        animController.SetFloat("VelY", velocity.y);
     }
 
     void Drag()
     {
         // apply drag
         Vector3 horizontalVelocity = new Vector3(velocity.x, 0, velocity.z);
-        velocity -= horizontalVelocity * drag * Time.fixedDeltaTime;
+        //velocity -= horizontalVelocity * drag * Time.fixedDeltaTime;
+
+        velocity -= velocity * drag * Time.fixedDeltaTime;
 
         // cancel out movements that are too small
-        if (velocity.magnitude <= 0.005f)
-            velocity = Vector3.zero;
+        if (velocity.x > -0.005f && velocity.x < 0.005f)
+            velocity.x = 0;
+        if (velocity.y > -0.005f && velocity.y < 0.005f)
+            velocity.y = 0;
+        if (velocity.z > -0.005f && velocity.z < 0.005f)
+            velocity.z = 0;
 
         // cap horizontal speed
         if (horizontalVelocity.magnitude > maxSpeed)
@@ -184,11 +144,11 @@ public class ThirdPersonController : MonoBehaviour
         velocity.y = Mathf.Clamp(velocity.y, -maxVerticalSpeed, maxVerticalSpeed);
     }
 
-    void Looking()
-    {
-        float mouseSensitivityFactor = mouseSensitivityCurve.Evaluate(mouse.magnitude);
-        transform.rotation *= Quaternion.AngleAxis(mouse.x * mouseSensitivityFactor * turnSpeed, Vector3.up);
-    }
+    //void Looking()
+    //{
+    //    float mouseSensitivityFactor = mouseSensitivityCurve.Evaluate(mouse.magnitude);
+    //    transform.rotation *= Quaternion.AngleAxis(mouse.x * mouseSensitivityFactor * turnSpeed, Vector3.up);
+    //}
 
     void Moving()
     {
@@ -200,7 +160,7 @@ public class ThirdPersonController : MonoBehaviour
     //--------------------------------------------------------------
 
     //--------------------------------------------------------------
-    #region Misc
+    #region Context Triggers
     //--------------------------------------------------------------
 
     void DoThing()
@@ -209,11 +169,51 @@ public class ThirdPersonController : MonoBehaviour
         {
             Collider[] triggers = Physics.OverlapSphere(transform.TransformPoint(interactCheck.center), interactCheck.radius, interactLayerMask, QueryTriggerInteraction.Collide);
 
-            foreach (Collider trigger in triggers)
+            List<IContextuallyActionable> actions = new List<IContextuallyActionable>();
+            IContextuallyActionable action;
+
+            foreach (Collider t in triggers)
             {
-                if (trigger.TryGetComponent(out IContextuallyActionable context))
-                    context.DoThing();
+                if (t.TryGetComponent(out action))
+                    actions.Add(action);
             }
+
+            IContextuallyActionable highestPriority = actions[0];
+
+            foreach (IContextuallyActionable a in actions)
+            {
+                if (a.GetPriority() > highestPriority.GetPriority())
+                    highestPriority = a;
+            }
+
+            highestPriority.DoThing();
+        }
+    }
+
+    void DoThingLonger()
+    {
+        if (IsInteracting())
+        {
+            Collider[] triggers = Physics.OverlapSphere(transform.TransformPoint(interactCheck.center), interactCheck.radius, interactLayerMask, QueryTriggerInteraction.Collide);
+
+            List<IContextuallyActionable> actions = new List<IContextuallyActionable>();
+            IContextuallyActionable action;
+
+            foreach (Collider t in triggers)
+            {
+                if (t.TryGetComponent(out action))
+                    actions.Add(action);
+            }
+
+            IContextuallyActionable highestPriority = actions[0];
+
+            foreach (IContextuallyActionable a in actions)
+            {
+                if (a.GetPriority() > highestPriority.GetPriority())
+                    highestPriority = a;
+            }
+
+            highestPriority.DoThingLonger();
         }
     }
     #endregion
@@ -269,12 +269,6 @@ public class ThirdPersonController : MonoBehaviour
         playerInputPaused = state;
     }
 
-    public void SetCameraInputPauseState(bool state)
-    {
-        cameraInputPaused = state;
-        camController.IsPaused = state;
-    }
-
     public void SetAnimatorPauseState(bool state)
     {
         animController.speed = (state ? 0.0f : 1.0f);
@@ -284,7 +278,6 @@ public class ThirdPersonController : MonoBehaviour
     {
         SetPhysicsPauseState(state);
         SetPlayerInputPauseState(state);
-        SetCameraInputPauseState(state);
         SetAnimatorPauseState(state);
     }
 
@@ -294,6 +287,13 @@ public class ThirdPersonController : MonoBehaviour
     //--------------------------------------------------------------
     #region Misc
     //--------------------------------------------------------------
+
+    public void ClearInput()
+    {
+        joystick = Vector2.zero;
+        contextInput = false;
+        longContextInput = false;
+    }
 
     public void ResetVelocity()
     {
@@ -308,10 +308,9 @@ public class ThirdPersonController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // trigger events
         if (other.TryGetComponent(out ITriggerableEvent e))
-        {
             e.DoThing();
-        }
     }
 
     private void OnDrawGizmosSelected()

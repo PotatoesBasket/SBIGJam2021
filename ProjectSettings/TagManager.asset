@@ -7,6 +7,7 @@ TagManager:
   - DialogBox
   - Trigger
   - Guide
+  - Debug
   layers:
   - Default
   - TransparentFX
@@ -19,7 +20,7 @@ TagManager:
   - Player
   - ContextZone
   - EventZone
-  - 
+  - Entity
   - 
   - 
   - 

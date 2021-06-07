@@ -6,4 +6,5 @@ interface IContextuallyActionable
 {
     void DoThing();
     void DoThingLonger();
+    int GetPriority();
 }

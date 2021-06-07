@@ -9,8 +9,12 @@ public class CameraManager : MonoBehaviour
 
     public List<CinemachineVirtualCamera> cameraList = new List<CinemachineVirtualCamera>();
 
-    public CinemachineVirtualCamera playerCam = null; // cam attached to back of player, always active and is default
-    public CinemachineVirtualCamera guideCam = null;
+    [SerializeField] CinemachineVirtualCamera introCam = null;
+    [SerializeField] CinemachineVirtualCamera playCam01 = null;       // 0
+    [SerializeField] CinemachineVirtualCamera guideCam = null;        // 1
+    [SerializeField] CinemachineVirtualCamera AICam = null;           // 2
+    [SerializeField] CinemachineVirtualCamera catCam = null;          // 3
+    [SerializeField] CinemachineVirtualCamera towerCam = null;        // 4
 
     CinemachineBrain camBrain;
 
@@ -19,16 +23,21 @@ public class CameraManager : MonoBehaviour
         if (current == null)
             current = this;
         else
-            Destroy(gameObject);
+        {
+            Destroy(current.gameObject);
+            current = this;
+        }
     }
 
     private void Start()
     {
         camBrain = Camera.main.GetComponent<CinemachineBrain>();
         LoadCameraList();
+
+        introCam.enabled = false;
     }
 
-    public bool CheckCamBlendState()
+    public bool CamIsBlending()
     {
         return camBrain.IsBlending;
     }
@@ -38,7 +47,10 @@ public class CameraManager : MonoBehaviour
         // camera attribute order: camera index, state (0 off, 1 on)
         // (eg: disable guide's cam = 10)
 
-        cameraList.Add(playerCam);  //0
-        cameraList.Add(guideCam);   //1
+        cameraList.Add(playCam01);      // 0
+        cameraList.Add(guideCam);       // 1
+        cameraList.Add(AICam);          // 2
+        cameraList.Add(catCam);         // 3
+        cameraList.Add(towerCam);       // 4
     }
 }
