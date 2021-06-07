@@ -29,7 +29,7 @@ public class Launch : MonoBehaviour, IContextuallyActionable
     public void DoThingLonger()
     {
         GameManager.current.playerController.isAirborne = true;
-        GameManager.current.playerController.velocity.y += launchVelocity * Time.fixedDeltaTime;
+        GameManager.current.playerController.velocity.y += launchVelocity * Time.deltaTime;
 
         if (effectsActive == false)
         {
