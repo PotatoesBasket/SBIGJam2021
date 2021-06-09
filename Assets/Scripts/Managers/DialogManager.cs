@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 using Cinemachine;
 
 public class DialogManager : MonoBehaviour
@@ -21,6 +22,9 @@ public class DialogManager : MonoBehaviour
     public CinemachineVirtualCamera currentCam = null;
 
     public bool allowProgression = true;
+    bool isLoaded = false;
+
+    public GameObject startTrigger = null;
 
     enum DialogState
     {
@@ -44,11 +48,15 @@ public class DialogManager : MonoBehaviour
 
     private void Start()
     {
-        LoadDialogFromFile();
+        //LoadDialogFromFile();
+        StartCoroutine(LoadDialogFromFile());
     }
 
     private void Update()
     {
+        if (isLoaded == false)
+            return;
+
         switch (currentDialogState)
         {
             case DialogState.Starting:
@@ -254,10 +262,42 @@ public class DialogManager : MonoBehaviour
         GameManager.current.playerController.SetAllPauseState(false);
     }
 
-    void LoadDialogFromFile()
+    void StartTalkingSFX()
     {
-        StreamReader file = new StreamReader(dialogFilePath);
+        AudioManager.current.SFXDefaultSource.clip = AudioManager.current.gibberish.GetRandomizedClip();
+        AudioManager.current.SFXDefaultSource.loop = false;
+        AudioManager.current.SFXDefaultSource.Play();
+    }
 
+    IEnumerator LoadDialogFromFile()
+    {
+#if UNITY_WEBGL// || UNITY_EDITOR
+        UnityWebRequest www = UnityWebRequest.Get(dialogFilePath);
+
+        yield return www.SendWebRequest();
+
+        Debug.Log(www.isDone);
+        Debug.Log(www.downloadHandler.text);
+
+        if (www.isNetworkError || www.isHttpError)
+        {
+            dialogText.text = "Uh oh! Looks like the game failed to get the dialog from the server for some reason :( Refresh and try again. Let me know if you think it's my fault and I'll try to fix it lol";
+            dialogBox.SetActive(true);
+
+            Debug.Log("eeerror");
+            yield break;
+        }
+        Debug.Log("done?");
+
+        isLoaded = true;
+        byte[] results = www.downloadHandler.data;
+
+        MemoryStream s = new MemoryStream(results);
+        StreamReader file = new StreamReader(s);
+#else
+        isLoaded = true;
+        StreamReader file = new StreamReader(dialogFilePath);
+#endif
         uint blockID = 0;
         List<string> block = new List<string>();
 
@@ -281,7 +321,7 @@ public class DialogManager : MonoBehaviour
                 dialogDictionary.Add(blockID, blockCopy);
                 block.Clear();
 
-                Debug.Log("Block " + blockID + " added to block dictionary");
+                //Debug.Log("Block " + blockID + " added to block dictionary");
 
                 // get new block ID
                 string ID = new string(line.ToCharArray(), 3, 2);
@@ -292,7 +332,7 @@ public class DialogManager : MonoBehaviour
                 // add line to current block
                 block.Add(line);
 
-                Debug.Log("Line (" + line + ") added to block " + blockID);
+                //Debug.Log("Line (" + line + ") added to block " + blockID);
             }
         }
 
@@ -303,17 +343,16 @@ public class DialogManager : MonoBehaviour
             finalBlockCopy.Add((string)l.Clone());
 
         dialogDictionary.Add(blockID, finalBlockCopy);
-        Debug.Log("Block " + blockID + " added to block dictionary");
+        //Debug.Log("Block " + blockID + " added to block dictionary");
 
         Debug.Log("end dialog file read");
 
         file.Close();
-    }
 
-    void StartTalkingSFX()
-    {
-        AudioManager.current.SFXDefaultSource.clip = AudioManager.current.gibberish.GetRandomizedClip();
-        AudioManager.current.SFXDefaultSource.loop = false;
-        AudioManager.current.SFXDefaultSource.Play();
+        yield return new WaitForEndOfFrame();
+
+        startTrigger.transform.position = GameManager.current.playerController.transform.position;
+
+        yield return null;
     }
 }

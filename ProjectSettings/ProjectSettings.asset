@@ -44,7 +44,7 @@ PlayerSettings:
   m_HolographicTrackingLossScreen: {fileID: 0}
   defaultScreenWidth: 800
   defaultScreenHeight: 600
-  defaultScreenWidthWeb: 960
+  defaultScreenWidthWeb: 800
   defaultScreenHeightWeb: 600
   m_StereoRenderingPath: 0
   m_ActiveColorSpace: 1
@@ -124,7 +124,7 @@ PlayerSettings:
     16:10: 0
     16:9: 0
     Others: 0
-  bundleVersion: 1.0
+  bundleVersion: 1.1
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -379,7 +379,10 @@ PlayerSettings:
   openGLRequireES31: 0
   openGLRequireES31AEP: 0
   openGLRequireES32: 0
-  m_TemplateCustomTags: {}
+  m_TemplateCustomTags:
+    BACKGROUND: 
+    OPTIMIZE_FOR_PIXEL_ART: false
+    SCALE_TO_FIT: true
   mobileMTRendering:
     Android: 1
     iPhone: 1
@@ -621,7 +624,7 @@ PlayerSettings:
   webGLDebugSymbols: 0
   webGLEmscriptenArgs: 
   webGLModulesDirectory: 
-  webGLTemplate: APPLICATION:Default
+  webGLTemplate: PROJECT:BetterMinimal
   webGLAnalyzeBuildSize: 0
   webGLUseEmbeddedResources: 0
   webGLCompressionFormat: 1
